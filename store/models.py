@@ -47,6 +47,7 @@ class Customer(models.Model):
         (MEMBERSHIP_SILVER, 'Silver'),
         (MEMBERSHIP_GOLD, 'Gold')
     ]
+    test = models.CharField(max_length=255, null=True)  # this is used to test the migrations
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)  # varchar(255) with a unique constraint
