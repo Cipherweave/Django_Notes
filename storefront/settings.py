@@ -87,7 +87,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'storefront',
-        'HOST': '192.168.0.15',
+        'HOST': 'localhost',
         'USER': 'remote_root',
         'PASSWORD': 'salamD0nya#2',
     }

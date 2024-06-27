@@ -5,6 +5,4 @@ from django.http import HttpResponse
 
 def say_hello(request):
     # return HttpResponse('Hello, Django!')
-    x = 1
-    y = 2
     return render(request, 'hello.html', { 'name': 'Django'})

@@ -52,14 +52,14 @@ class Customer(models.Model):
     last_name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)  # varchar(255) with a unique constraint
     phone = models.CharField(max_length=255)  # varchar(20)
-    birthdate = models.DateField(null=True)  # date
+    birth_date = models.DateField(null=True)  # date
     membership = models.CharField(max_length=1, choices=MEMBERSHIP_CHOICES, default=MEMBERSHIP_BRONZE) # used the choices list
     # address = ... # we dont need to add address here because django already created one for use (the reverse relationship)
-    class Meta: # class meta is as an setting for the model (table)
-        db_table = 'store_customers'  # this is used to change the name of the table in the database
-        indexes = [
-            models.Index(fields=['last_name', 'first_name'])  # this is used to create an index on the last_name and first_name fields
-        ]
+    # class Meta: # class meta is as an setting for the model (table)
+    #     db_table = 'store_customers'  # this is used to change the name of the table in the database
+    #     indexes = [
+    #         models.Index(fields=['last_name', 'first_name'])  # this is used to create an index on the last_name and first_name fields
+    #     ]
 
 
 class Order(models.Model):
@@ -72,7 +72,7 @@ class Order(models.Model):
         (FAILD, 'Failed')
     ]
     placed_at = models.DateTimeField(auto_now_add=True)
-    payment_statues = models.CharField(max_length=1, choices=STATUS_CHOICES, default=PENDING)
+    payment_status = models.CharField(max_length=1, choices=STATUS_CHOICES, default=PENDING)
     customer = models.ForeignKey(Customer, on_delete=models.PROTECT)  # foreign key to the customer table
 
 
