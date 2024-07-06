@@ -48,7 +48,7 @@ class Product(models.Model):  # these fields are all in https://docs.djangoproje
         validators=[MinValueValidator(1)]) # decimal(6,2)  is like 9999.99, validators is used to add a constraint to the field in this case the minimum value is 1
     inventory = models.IntegerField(validators=[MinValueValidator(1)])  # int
     last_update = models.DateTimeField(auto_now=True)  # datetime
-    collection = models.ForeignKey(Collection, on_delete=models.PROTECT)  # foreign key to the collection table
+    collection = models.ForeignKey(Collection, on_delete=models.PROTECT)  # on_delete in this case is used to protect the collection from being deleted
     promotions = models.ManyToManyField(Promotion, related_name='product', blank=True)  # many to many relationship with the promotion table
     # because a product can have multiple promotions and a promotion can be applied to multiple products
     # related_name is the name given to the reverse relationship that django creates for us

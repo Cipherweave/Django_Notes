@@ -96,10 +96,11 @@ def say_hello(request):
     # # selected_related is for One to Many relationships like collection for example each product can have only one collection
     # # prefetch_related is for Many to Many relationships like promotions for example each item can have multiple promotions
     # queryset = Product.objects.prefetch_related('promotions').all() # this is how we select the related tables (objects)
-
+    # in sql it is like a join statement
 
     # queryset = Order.objects.all().select_related('customer').prefetch_related('orderitem_set__product').order_by('-placed_at')[:5]
     # # the orderitem_set is the name of the reverse relationship that django created for us, __product is the name of the table we want to get
+    # # so we basicaly join the order table with the customer table and the orderitem table with the product table. the number of tables joined are 4
 
     # result = Product.objects.aggregate(count=Count('id'), min_price=Min('unit_price')) # cound the number of products. this returns a dictionary
     # # count is the name of the key. we could use aggregates at the end of the querysets too.
