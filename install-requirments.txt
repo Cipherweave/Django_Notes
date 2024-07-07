@@ -5,6 +5,10 @@
 - connect pipenv to you python by typing "where python", and then pipenv --python path\to\python3.11
 - go to the project dir in cmd and type: pipenv install django   
 - go to https://django-debug-toolbar.readthedocs.io/en/latest/installation.html and install the debug toolbar
+- install mysql client: pipenv install mysqlclient
 - use pip list to check all the installations in the virual env
 - use "pipenv --venv" then copy the path given, go back to vs code, press "ctrl + shift + p" and then press
 python interpreter, then press new path, paste the path, then add "\bin\python
+- to create admin user: python manage.py createsuperuser
+- to install django rest framework: pipenv install djangorestframework , then go to setting, installed_apps 
+and add: rest_framework
