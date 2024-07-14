@@ -140,3 +140,9 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# REST framework json renderer by default converts everything to string we can overright this by setting the following
+REST_FRAMEWORK = {
+    'COERCE_DECIMAL_TO_STRING': False
+}   
