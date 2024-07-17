@@ -1,12 +1,16 @@
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
-from rest_framework.decorators import api_view  # django has http request and responce, rest_framework has the same
-# but more powerfull
+from rest_framework.decorators import api_view  # django has http request and responce, rest_framework has the same but more powerfull
+from django.db.models import Count
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Product
-from .serializers import ProductSerializer 
+from rest_framework.views import APIView # this is the class based view
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
+# from rest_framework.mixins import ListModelMixin, CreateModelMixin
+from .models import Product, Collection
+from .serializers import ProductSerializer, CollectionSerializer
 
+# FUNCTION BASED VIEW ---------------- LEVEL 1 ----------------
 # Create your views here.
 @api_view(['GET', 'POST']) # this decorator is used to define the view by doing this we can use the rest_framework
 def product_list(request):
@@ -28,28 +32,137 @@ def product_list(request):
         #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         # WE CAN USE THIS:
         serializer.is_valid(raise_exception=True) # checks whether the user imput is currect or not. we can overwrite it in the serializer which we did as an example using def validate
-        serializer.validated_data 
-        return Response('ok')
+        serializer.save() # this is used to save the data in the database
+        # serializer.validated_data # this is for accessing the validated data
+        return Response(serializer.data, status=status.HTTP_201_CREATED) # 201 is used to show that the data is created and the data is returned in the response
 
 
 
-@api_view()
+@api_view(['GET', 'PUT', 'DELETE']) # put is for updating the data and its difference with patch is that it updates the whole object and patch updates the part of the object
 def product_detail(request, id):
-    # try:
-    #     product = Product.objects.get(pk=id) # get the product from the database
-    #     serializer = ProductSerializer(product) # converting the data into json format
-    #     return Response(serializer.data) # serializer.data gives you the data in dict format
-    #     # the conversion of dict to json is done hiddenly by the rest_framework and by json renderer
-    # except Product.DoesNotExist:
-    #     return Response(status=status.HTTP_404_NOT_FOUND) # if the product is not found then return 404 status code. 
-    #     # this is the standard REST API status code
-
-    # INSTED the same thing:
     product = get_object_or_404(Product, pk=id)
-    serializer = ProductSerializer(product)
-    return Response(serializer.data)
+    if request.method == "GET":
+        # try:
+        #     product = Product.objects.get(pk=id) # get the product from the database
+        #     serializer = ProductSerializer(product) # converting the data into json format
+        #     return Response(serializer.data) # serializer.data gives you the data in dict format
+        #     # the conversion of dict to json is done hiddenly by the rest_framework and by json renderer
+        # except Product.DoesNotExist:
+        #     return Response(status=status.HTTP_404_NOT_FOUND) # if the product is not found then return 404 status code. 
+        #     # this is the standard REST API status code
+
+        # INSTED the same thing:
+        # product = get_object_or_404(Product, pk=id)
+        serializer = ProductSerializer(product)
+        return Response(serializer.data)
+    elif request.method == "PUT":
+        serializer = ProductSerializer(product, data=request.data) # puting product in the first argument is used to update the product and data=request.data is used to update the data. 
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_202_ACCEPTED) # 202 is used to show that the request is accepted and the data is updated
+    
+    elif request.method == "DELETE":
+        if product.orderitems.count() > 0:
+            return Response({'error': 'Product cannot be deleted because it is in stock'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        product.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT) # 204 is used to show that the data is deleted and no content is returned
 
 
-@api_view()
+@api_view(["GET", "POST"])
+def collection_list(request):
+    if request.method == "GET":
+        collections = Collection.objects.annotate(products_count=Count('product')) # this is used to get the count of the products in the collection
+        serializer = CollectionSerializer(collections, many=True)
+        return Response(serializer.data)
+    elif request.method == "POST":
+        serializer = CollectionSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+@api_view(["GET", "PUT", "DELETE"])
 def collection_detail(request, pk):
-    return Response('ok')
+    collection = get_object_or_404(Collection.objects.annotate(products_count=Count('products')), pk=pk)
+    if request.method == "GET":
+        serializer = CollectionSerializer(collection)
+        return Response(serializer.data)
+    elif request.method == "PUT":
+        serializer = CollectionSerializer(collection, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+    elif request.method == "DELETE":
+        if collection.products_count > 0:
+            return Response({'error': 'Collection cannot be deleted because it contains products'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        collection.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+
+# # CLASS BASED VIEW ---------------- LEVEL 2 ----------------
+# # it is better: 1) avoid having nested if statements
+# class ProductList(APIView): # this is the same as the function based view but it is the class based view. function based is the one that we have been using till now
+#     def get(self, request):
+#         products = Product.objects.select_related('collection').all()
+#         serializer = ProductSerializer(products, many=True, context={'request': request})
+#         return Response(serializer.data) 
+
+#     def post(self, request):
+#         serializer = ProductSerializer(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+#         serializer.save()
+#         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+class ProductDetail(APIView):
+    def get(self, request, id):
+        product = get_object_or_404(Product, pk=id)
+        serializer = ProductSerializer(product)
+        return Response(serializer.data)
+    
+    def put(self, request, id):
+        product = get_object_or_404(Product, pk=id)
+        serializer = ProductSerializer(product, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+    
+    def delete(self, request, id):
+        product = get_object_or_404(Product, pk=id)
+        product.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
+
+# MIXINS ---------------- LEVEL 3 ----------------
+class ProductList(ListCreateAPIView):
+    # if you dont have any logic or condition then you can use just the attributes
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+
+    # if you want to have some logic or some condiotion then you use theses methods
+    # mayber you want to check the current user permitions and give them some filter
+    def get_queryset(self):
+        return Product.objects.select_related('collection').all()
+    
+    def get_serializer_class(self):
+        return ProductSerializer
+    
+    def get_serializer_context(self):
+        return {'request': self.request}
+    
+
+# class ProductDetail(RetrieveUpdateDestroyAPIView):
+#     queryset = get_object_or_404(Product, pk=id)
+#     serializer_class = ProductSerializer
+
+#     def delete(self, request, id):
+#         product = get_object_or_404(Product, pk=id)
+#         if product.orderitems.count() > 0:
+#             return Response({'error': 'Product cannot be deleted because it is in stock'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+#         product.delete()
+#         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+
+class CollectionList(ListCreateAPIView):
+    queryset = Collection.objects.annotate(products_count=Count('products')).all()
+    serializer_class = CollectionSerializer
