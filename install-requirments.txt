@@ -13,4 +13,4 @@ python interpreter, then press new path, paste the path, then add "Scripts\pytho
 - to install django rest framework: pipenv install djangorestframework , then go to setting, installed_apps 
 and add: rest_framework
 - Download Nested Routers: pipenv install drf-nested-routers
-- Download filtering: pipenv install django-filter, add 'django_filters' on installed_apps.py
+- Download filtering: pipenv install django-filter, add 'django_filters' on setting.py
