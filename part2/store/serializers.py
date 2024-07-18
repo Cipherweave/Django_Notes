@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Product, Collection
+from .models import Product, Collection, Review
 from decimal import Decimal
 
 # difference between modelserializer and serializer is that modelserializer is used to serialize the model and serializer is used to serialize the data meaning it will suppurt the data that is not in the model
@@ -71,3 +71,13 @@ class ProductSerializer(serializers.ModelSerializer): # this is basically the sa
     #    instance.save()
     #    return instance
     
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Review
+        fields = ['id', 'date', 'name', 'description'] # this is used to serialize the fields of the model
+
+    def create(self, validated_data): 
+        product_id = self.context['product_id']
+        return Review.objects.create(product_id=product_id, **validated_data) # we create the review object and pass the product. validate data is the data that is passed in the post request
