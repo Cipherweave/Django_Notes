@@ -2,16 +2,19 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
 from rest_framework.decorators import api_view  # django has http request and responce, rest_framework has the same but more powerfull
 from django.db.models import Count
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter, OrderingFilter
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView # this is the class based view
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
-from rest_framework.viewsets import ModelViewSet
-# from rest_framework.mixins import ListModelMixin, CreateModelMixin
-from .models import Product, Collection, OrderItem, Review
-from .serializers import ProductSerializer, CollectionSerializer, ReviewSerializer
+from rest_framework.viewsets import ModelViewSet, GenericViewSet    
+from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, DestroyModelMixin
+from .models import Product, Collection, OrderItem, Review, Cart, CartItem
+from .serializers import ProductSerializer, CollectionSerializer, ReviewSerializer, CartSerializer, CartItemSerializer, AddCartItemSerializer, UpdateCartItemSerializer
 
-# # FUNCTION BASED VIEW ---------------- LEVEL 1 ----------------
+# # FUNCTION BASED VIEW ---------------- LEVEL 1 ---------------- 
 # # Create your views here.
 # @api_view(['GET', 'POST']) # this decorator is used to define the view by doing this we can use the rest_framework
 # def product_list(request):
@@ -183,22 +186,32 @@ from .serializers import ProductSerializer, CollectionSerializer, ReviewSerializ
     
 
 
-# ModelViewSet ---------------- LEVEL 4 ----------------
+# ModelViewSet ---------------- LEVEL 4 ---------------- Suppurts a list of object and their specific id at the same time
 # we again mix the product list and product detail view because they have a lot of same code
 class ProductViewSet(ModelViewSet):  # Sometimes we only want to read only so we can use ReadOnlyModelViewSet
+    queryset = Product.objects.all()
     serializer_class = ProductSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter] # easier way to filter the data
+    filterset_fields = ['collection_id', 'unit_price'] # put the filtering over here    
+    search_fields = ['title', 'description'] # this is for searching and not filtering. but both use the same filter_backends
+    OrderingFilter = ['unit_price', 'last_update'] # this is used to order the data accending or decending
 
-    def get_queryset(self):
-        queryset = Product.objects.all()
-        collection_id = self.request.query_params.get('collection_id')
-        if collection_id is not None:
-            queryset = queryset.filter(collection_id=collection_id)
-        return queryset
+    pagination_class = PageNumberPagination # this is used to paginate the data. it is used to show the data in pages
+    # We changed the page size in the settings.py file under the rest_framework section
+    # We need this if we only want this view to have pagination. if we want all the views to have pagination then we can set the pagination in the settings.py file under the rest_framework section and remove this line
+
+    # How we can filter the data using the url parameters. meaning if we want to get the products of a specific collection. but the code up is the better way to do this
+    # def get_queryset(self):
+    #     queryset = Product.objects.all()
+    #     collection_id = self.request.query_params.get('collection_id')
+    #     if collection_id is not None:
+    #         queryset = queryset.filter(collection_id=collection_id)
+    #     return queryset
 
     def get_serializer_context(self):
         return {'request': self.request}
     
-    def destroy(self, request, *args, **kwargs): # distroy is used to delete only one object
+    def destroy(self, request, *args, **kwargs): # distroy is used to delete only one object 
         if OrderItem.objects.filter(product_id=kwargs['pk']).count() > 0:
             return Response({'error': 'Product cannot be deleted because it is in stock'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
         return super().destroy(request, *args, **kwargs)
@@ -223,7 +236,7 @@ class CollectionViewSet(ModelViewSet):
     
 
 class ReviewViewSet(ModelViewSet):
-    queryset = Review.objects.all()
+    queryset = Review.objects.prefetch_related('items__product').all() 
     serializer_class = ReviewSerializer
 
     def get_queryset(self):
@@ -231,3 +244,33 @@ class ReviewViewSet(ModelViewSet):
 
     def get_serializer_context(self): # get Context is beasically when we want to give url parameters to the serializer
         return {'product_id': self.kwargs['product_pk']} # we do this because we want to get the product id from the url and pass it to the serializer becuase we dont want to get the product id from the user because it can be manipulated
+    
+
+class CartViewSet(CreateModelMixin, GenericViewSet, RetrieveModelMixin, DestroyModelMixin): # CreateModelMixin is used to create the object and GenericViewSet is used to get the object. toghether they are used to create and get the object. so we can use the post and get request. 
+    queryset = Cart.objects.all() # what is the point of this queryset when it doesnt show it: it is used to get the queryset for the serializer
+    serializer_class = CartSerializer
+
+        
+class CartItemViewSet(ModelViewSet):
+    # serializer_class = CartItemSerializer
+    http_method_names = ['get', 'post', 'patch', 'delete'] # ALLOWED FUNCTIONALITIES
+    
+    def get_serializer_class(self):
+        if self.request.method == 'POST': # we choose a custome serializer for post
+            return AddCartItemSerializer    
+        elif self.request.method == 'PATCH':
+            return UpdateCartItemSerializer
+        else:
+            return CartItemSerializer
+
+    def get_queryset(self):
+        return CartItem.objects \
+            .filter(cart_id=self.kwargs['cart_pk']) \
+            .select_related('product') # increase the speed
+    
+    def get_serializer_context(self):
+        return {'cart_id': self.kwargs['cart_pk']} # context is the additional data you want to give to serializer. and kwargs is the qrguments captured from urls
+
+
+
+

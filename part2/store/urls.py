@@ -30,6 +30,7 @@ from . import views
 router = routers.DefaultRouter()
 router.register('products', views.ProductViewSet, basename='products') # this is used to register the viewset with the router
 router.register('collections', views.CollectionViewSet) # this is used to register the viewset with the router
+router.register('carts', views.CartViewSet) # this is used to register the viewset with the router
 
 product_router = routers.NestedDefaultRouter(router, 'products', lookup='product') # this is used to create a nested router.
 # lookup is basically the name of the field that is used to get the value from the url. in this case it is product
@@ -37,9 +38,12 @@ product_router = routers.NestedDefaultRouter(router, 'products', lookup='product
 product_router.register('reviews', views.ReviewViewSet, basename='product-reviews') # this is used to register the viewset with the router
 # BASE NAME is used to give the name to the url so that we can use it in the serializer. by default it is the queryset name in lowercase
 
+carts_router = routers.NestedDefaultRouter(router, 'carts', lookup='cart') # lookup is the mother field given to us so we give it to the sub field
+carts_router.register('items', views.CartItemViewSet, basename='cart-items')
+
 # urlpatterns = [
 #     path('', include(router.urls)),
 #     path('', include(product_router.urls)),
 # ]
 # or 
-urlpatterns = router.urls + product_router.urls # this is used to include the urls from the router. 
+urlpatterns = router.urls + product_router.urls + carts_router.urls # this is used to include the urls from the router. 

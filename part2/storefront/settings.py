@@ -145,5 +145,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # REST framework json renderer by default converts everything to string we can overright this by setting the following
 REST_FRAMEWORK = {
-    'COERCE_DECIMAL_TO_STRING': False
-}   
+    'COERCE_DECIMAL_TO_STRING': False,
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
+}   # this is used to set the default page size for the pagination. The default pagination class is basically a global setting for all the views. if you want to set the pagination for a specific view then you can set it in the view itself and remove this setting from here
