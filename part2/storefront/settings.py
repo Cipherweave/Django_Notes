@@ -41,10 +41,11 @@ INSTALLED_APPS = [
     'rest_framework',
     'playground',
     'debug_toolbar',
+    'djoser',
     'store',
-    'store_custom',
     'tags',
-    'likes'
+    'likes',
+    'core',
 ]
 
 MIDDLEWARE = [
@@ -148,4 +149,14 @@ REST_FRAMEWORK = {
     'COERCE_DECIMAL_TO_STRING': False,
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
+
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
 }   # this is used to set the default page size for the pagination. The default pagination class is basically a global setting for all the views. if you want to set the pagination for a specific view then you can set it in the view itself and remove this setting from here
+
+SIMPLE_JWT = {
+   'AUTH_HEADER_TYPES': ('JWT',),
+} # this is for the djoser and adds a JWT to the authentication tokens
+
+AUTH_USER_MODEL = 'core.User'  # Change the Built in Auth User to the model we made

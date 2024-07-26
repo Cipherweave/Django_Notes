@@ -78,11 +78,13 @@ class CollectionAdmin(admin.ModelAdmin):
 
 @admin.register(models.Customer)
 class CustomerAdmin(admin.ModelAdmin):
-    list_display = ['first_name', 'last_name',  'membership', 'orders']
+    list_display = ['first_name', 'last_name',  'membership', 'orders'] # we have to call user__first_name but this syntax is not available so we make a function first_name in models
     list_editable = ['membership']
     list_per_page = 10
-    ordering = ['first_name', 'last_name']
+    list_select_related = ['user'] # eager loading the user because we dont want a single query for each first and last name
+    ordering = ['user__first_name', 'user__last_name'] 
     search_fields = ['first_name__istartswith', 'last_name__istartswith']
+    autocomplete_fields = ['user']
 
     @admin.display(ordering='orders_count')
     def orders(self, customer):

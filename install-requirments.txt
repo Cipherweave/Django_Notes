@@ -14,3 +14,16 @@ python interpreter, then press new path, paste the path, then add "Scripts\pytho
 and add: rest_framework
 - Download Nested Routers: pipenv install drf-nested-routers
 - Download filtering: pipenv install django-filter, add 'django_filters' on setting.py
+- Install the djoser framework for user authentication: pipenv install djoser  , add 'djoser' in installed apps,
+add a path 'path('auth/', inlude('djoser.urls'))' in the main url pannel
+- Install djoser authentication engine: install: pipenv install djangorestframework_simplejwt
+go to Rest_framework setting and add:
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+
+also add to the setting:
+    SIMPLE_JWT = {
+        'AUTH_HEADER_TYPES': ('JWT',),
+    }
+add this url pattern to the url module: path('auth/', include('djoser.urls.jwt')),
